@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: did_mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "DigitalID@2025"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    container_name: did_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: DigitalID@2025
+      MONGO_INITDB_DATABASE: digital_identity_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: did_redis
+    command: redis-server --requirepass DigitalID@2025
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  mssql_data:
+  mongo_data:

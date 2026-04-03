@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find E:/digital-identity-system -name *.pdf -o -name *.docx -o -name *.md -o -name *.txt)",
+      "Bash(pandoc \"E:/J''pura Campus/Research/New folder/Research_Proposal_G28_Updated.docx\" -t plain)",
+      "Bash(python -c \"import pdfplumber; pdf=pdfplumber.open\\(r''''E:\\\\J''''\\\\''''''''pura Campus\\\\Research\\\\Group 28 - Final Thesis.pdf''''\\); [print\\(p.extract_text\\(\\)\\) for p in pdf.pages]\")",
+      "Bash(python -c \":*)",
+      "Bash(python -c \"from pypdf import PdfReader; print\\(''''pypdf ok''''\\)\")",
+      "Bash(python -c \"import pypdf2; print\\(''''pypdf2 ok''''\\)\")",
+      "Bash(pip show:*)",
+      "Bash(pip install:*)",
+      "Bash(SKILL_DIR=\"C:/Users/SANDARUWAN/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/334e8cb6-80fb-4038-a924-cefd1a9c9f6c/8647476d-c83b-4b51-a836-bbda9c89fceb/skills/docx\")",
+      "Bash(python \"$SKILL_DIR/scripts/office/unpack.py\" \"C:/Users/SANDARUWAN/Downloads/Research_Paper_Blockchain_Digital_Identity_SriLanka_Final \\(2\\).docx\" /tmp/paper_unpacked/)",
+      "Bash(python -:*)",
+      "Bash(python -c \"import os; print\\(os.listdir\\(''/tmp/proposal_unpacked/word/''\\)\\)\")",
+      "Bash(python \"E:/digital-identity-system/extract_pdf.py\")",
+      "Bash(python -c \"import os; print\\(os.getcwd\\(\\)\\); print\\(os.listdir\\(''/tmp/''\\)\\)\")",
+      "Bash(python -c \"import os; print\\(os.listdir\\(''C:/tmp/proposal_unpacked/word/''\\)\\)\")",
+      "Bash(python -c \"import tempfile; print\\(tempfile.gettempdir\\(\\)\\)\")",
+      "Bash(python \"E:/digital-identity-system/extract_pdf_to_file.py\")",
+      "Bash(cygpath -w /tmp/proposal_unpacked/word/document.xml)",
+      "Bash(python -c \"import subprocess; r = subprocess.run\\([''cygpath'',''-w'',''/tmp/proposal_unpacked/word/document.xml''], capture_output=True, text=True\\); print\\(r.stdout, r.stderr\\)\")",
+      "Bash(wc -c \"E:/digital-identity-system/thesis_extracted_text.txt\")"
+    ]
+  }
+}

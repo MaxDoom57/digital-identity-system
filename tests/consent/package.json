@@ -1,0 +1,22 @@
+{
+  "name": "consent-enforcement-tests",
+  "version": "1.0.0",
+  "description": "Jest integration tests for consent enforcement — thesis security validation",
+  "private": true,
+  "scripts": {
+    "test": "jest --runInBand --verbose",
+    "test:ci": "jest --runInBand --verbose --forceExit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 20000,
+    "testMatch": ["**/*.test.js"]
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "jsonwebtoken": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

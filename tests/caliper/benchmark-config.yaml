@@ -1,0 +1,160 @@
+---
+# ============================================================
+# Hyperledger Caliper — Benchmark Configuration
+# Digital Identity System — Thesis Section 7 Table
+#
+# 9 rounds = 3 workloads × 3 concurrency levels (50/100/200)
+#
+# Metrics captured per round:
+#   - TPS (send rate / throughput)
+#   - Transaction latency (min / max / avg / p99)
+#   - Success / failure counts
+#
+# Run with:
+#   npx caliper launch manager \
+#     --caliper-workspace . \
+#     --caliper-benchconfig benchmark-config.yaml \
+#     --caliper-networkconfig network-config.yaml
+# ============================================================
+
+test:
+  name: Digital Identity System — Blockchain Performance Benchmarks
+  description: >
+    Measures throughput and latency of the three core on-chain operations
+    under 50, 100, and 200 concurrent workers. Results feed into thesis
+    Section 7 (Performance Evaluation).
+
+  # ── Shared worker / rate settings ─────────────────────────────────────────
+  # Each round overrides workers and rateControl to achieve the target load.
+  rounds:
+
+    # ──────────────────────────────────────────────────────────────────────
+    # WORKLOAD 1: Identity Query (GetIdentity — read path)
+    # ──────────────────────────────────────────────────────────────────────
+    - label: identity-query-50
+      description: "GetIdentity — 50 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 50      # keep 50 transactions in-flight at all times
+      workload:
+        module: workloads/identity-query.js
+        arguments:
+          concurrency: 50
+
+    - label: identity-query-100
+      description: "GetIdentity — 100 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 100
+      workload:
+        module: workloads/identity-query.js
+        arguments:
+          concurrency: 100
+
+    - label: identity-query-200
+      description: "GetIdentity — 200 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 200
+      workload:
+        module: workloads/identity-query.js
+        arguments:
+          concurrency: 200
+
+    # ──────────────────────────────────────────────────────────────────────
+    # WORKLOAD 2: Consent Grant (GrantPermission — write path)
+    # ──────────────────────────────────────────────────────────────────────
+    - label: consent-grant-50
+      description: "GrantPermission — 50 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 50
+      workload:
+        module: workloads/consent-grant.js
+        arguments:
+          concurrency: 50
+
+    - label: consent-grant-100
+      description: "GrantPermission — 100 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 100
+      workload:
+        module: workloads/consent-grant.js
+        arguments:
+          concurrency: 100
+
+    - label: consent-grant-200
+      description: "GrantPermission — 200 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 200
+      workload:
+        module: workloads/consent-grant.js
+        arguments:
+          concurrency: 200
+
+    # ──────────────────────────────────────────────────────────────────────
+    # WORKLOAD 3: Audit Log Write (LogEvent — write path)
+    # ──────────────────────────────────────────────────────────────────────
+    - label: audit-log-write-50
+      description: "LogEvent — 50 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 50
+      workload:
+        module: workloads/audit-log-write.js
+        arguments:
+          concurrency: 50
+
+    - label: audit-log-write-100
+      description: "LogEvent — 100 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 100
+      workload:
+        module: workloads/audit-log-write.js
+        arguments:
+          concurrency: 100
+
+    - label: audit-log-write-200
+      description: "LogEvent — 200 concurrent workers, 30 s"
+      txDuration: 30
+      rateControl:
+        type: fixed-load
+        opts:
+          transactionLoad: 200
+      workload:
+        module: workloads/audit-log-write.js
+        arguments:
+          concurrency: 200
+
+# ── Report output ─────────────────────────────────────────────────────────────
+observer:
+  type: prometheus
+  interval: 5   # scrape interval in seconds; remove if Prometheus not available
+
+monitors:
+  resource:
+    - module: docker
+      options:
+        interval: 5
+        containers:
+          - peer0.org1.example.com
+          - orderer.example.com
