@@ -1,8 +1,117 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api';
 import { theme } from '../styles/theme';
-import { Building2, Plus, Shield, Globe, Trash2, Edit2, X } from 'lucide-react';
+import { Building2, Plus, Shield, Globe, Trash2, Edit2, X, Check, CheckCircle, XCircle } from 'lucide-react';
 
+const sectors = ['Government', 'Banking', 'Healthcare', 'Education', 'Telecommunication'];
+const fields  = ['FullName', 'DOB', 'Address', 'Phone', 'Email', 'NIC'];
+
+const inputStyle = {
+  background: theme.bg, border: `1px solid ${theme.border}`, borderRadius: 8,
+  padding: '10px 12px', color: theme.textPrimary, fontSize: 13, width: '100%',
+  outline: 'none', marginBottom: 16, boxSizing: 'border-box'
+};
+
+// ── Modal is defined at module level so React never re-creates its type ──────
+function OrgModal({ title, isEdit, onSave, onClose, loading,
+                    newOrg, setNewOrg, editOrg, setEditOrg }) {
+
+  const toggleField = (f) => {
+    if (isEdit) {
+      const cur = editOrg.allowedFields || [];
+      setEditOrg({ ...editOrg, allowedFields: cur.includes(f) ? cur.filter(x => x !== f) : [...cur, f] });
+    } else {
+      const cur = newOrg.allowedFields;
+      setNewOrg({ ...newOrg, allowedFields: cur.includes(f) ? cur.filter(x => x !== f) : [...cur, f] });
+    }
+  };
+
+  const currentFields = isEdit ? (editOrg?.allowedFields || []) : (newOrg?.allowedFields || []);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, backdropFilter: 'blur(4px)' }}>
+      <div style={{ background: theme.bgCard, borderRadius: 16, border: `1px solid ${theme.border}`,
+        padding: 32, width: 480, maxHeight: '90vh', overflowY: 'auto' }}>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: theme.textPrimary }}>{title}</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: theme.textMuted, cursor: 'pointer' }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        {!isEdit && (
+          <>
+            <label style={{ fontSize: 11, color: theme.textMuted, display: 'block',
+              marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Organization ID</label>
+            <input
+              style={inputStyle}
+              value={newOrg.orgId}
+              onChange={e => setNewOrg({ ...newOrg, orgId: e.target.value })}
+              placeholder="e.g. SAMPATH-BANK"
+            />
+
+            <label style={{ fontSize: 11, color: theme.textMuted, display: 'block',
+              marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Official Name</label>
+            <input
+              style={inputStyle}
+              value={newOrg.orgName}
+              onChange={e => setNewOrg({ ...newOrg, orgName: e.target.value })}
+              placeholder="e.g. Sampath Bank PLC"
+            />
+
+            <label style={{ fontSize: 11, color: theme.textMuted, display: 'block',
+              marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sector</label>
+            <select style={inputStyle} value={newOrg.sector}
+              onChange={e => setNewOrg({ ...newOrg, sector: e.target.value })}>
+              {sectors.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </>
+        )}
+
+        <label style={{ fontSize: 11, color: theme.textMuted, display: 'block',
+          marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Data Access Permissions
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 24 }}>
+          {fields.map(f => {
+            const selected = currentFields.includes(f);
+            return (
+              <div key={f} onClick={() => toggleField(f)}
+                style={{ padding: '10px 14px', borderRadius: 8, cursor: 'pointer',
+                  background: selected ? theme.accentGlow : theme.bg,
+                  border: `1px solid ${selected ? theme.accent : theme.border}`,
+                  color: selected ? theme.accent : theme.textSecondary,
+                  fontSize: 13, fontWeight: selected ? 600 : 400, transition: 'all 0.15s',
+                  display: 'flex', alignItems: 'center', gap: 6 }}>
+                {selected && <Check size={13} />}{f}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={onClose}
+            style={{ flex: 1, padding: '11px', borderRadius: 8,
+              border: `1px solid ${theme.border}`, background: 'transparent',
+              color: theme.textSecondary, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            Cancel
+          </button>
+          <button onClick={onSave} disabled={loading}
+            style={{ flex: 1, padding: '11px', borderRadius: 8, border: 'none',
+              background: theme.accent, color: 'white',
+              cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Register Organization'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page component ───────────────────────────────────────────────────────
 export default function Organizations() {
   const [orgs, setOrgs] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -10,9 +119,6 @@ export default function Organizations() {
   const [newOrg, setNewOrg] = useState({ orgId: '', orgName: '', sector: 'Government', allowedFields: [] });
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
-
-  const sectors = ['Government', 'Banking', 'Healthcare', 'Education', 'Telecommunication'];
-  const fields = ['FullName', 'DOB', 'Address', 'Phone', 'Email', 'NIC'];
 
   useEffect(() => { loadOrgs(); }, []);
 
@@ -66,16 +172,6 @@ export default function Organizations() {
     }
   };
 
-  const toggleField = (f, isEdit = false) => {
-    if (isEdit) {
-      const current = editOrg.allowedFields || [];
-      setEditOrg({ ...editOrg, allowedFields: current.includes(f) ? current.filter(x => x !== f) : [...current, f] });
-    } else {
-      const current = newOrg.allowedFields;
-      setNewOrg({ ...newOrg, allowedFields: current.includes(f) ? current.filter(x => x !== f) : [...current, f] });
-    }
-  };
-
   const parseFields = (f) => {
     if (Array.isArray(f)) return f;
     if (typeof f === 'string') {
@@ -83,86 +179,6 @@ export default function Organizations() {
     }
     return [];
   };
-
-  const inputStyle = {
-    background: theme.bg, border: `1px solid ${theme.border}`, borderRadius: 8,
-    padding: '10px 12px', color: theme.textPrimary, fontSize: 13, width: '100%',
-    outline: 'none', marginBottom: 16, boxSizing: 'border-box'
-  };
-
-  const Modal = ({ title, orgData, onSave, onClose, isEdit }) => (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-      <div style={{ background: theme.bgCard, borderRadius: 16, border: `1px solid ${theme.border}`,
-        padding: 32, width: 480, maxHeight: '90vh', overflowY: 'auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: theme.textPrimary }}>{title}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none',
-            color: theme.textMuted, cursor: 'pointer' }}><X size={20} /></button>
-        </div>
-
-        {!isEdit && (
-          <>
-            <label style={{ fontSize: 11, color: theme.textMuted, display: 'block',
-              marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Organization ID</label>
-            <input style={inputStyle} value={newOrg.orgId}
-              onChange={e => setNewOrg({ ...newOrg, orgId: e.target.value })}
-              placeholder="e.g. SAMPATH-BANK" />
-
-            <label style={{ fontSize: 11, color: theme.textMuted, display: 'block',
-              marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Official Name</label>
-            <input style={inputStyle} value={newOrg.orgName}
-              onChange={e => setNewOrg({ ...newOrg, orgName: e.target.value })}
-              placeholder="e.g. Sampath Bank PLC" />
-
-            <label style={{ fontSize: 11, color: theme.textMuted, display: 'block',
-              marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sector</label>
-            <select style={inputStyle} value={newOrg.sector}
-              onChange={e => setNewOrg({ ...newOrg, sector: e.target.value })}>
-              {sectors.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </>
-        )}
-
-        <label style={{ fontSize: 11, color: theme.textMuted, display: 'block',
-          marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Data Access Permissions
-        </label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 24 }}>
-          {fields.map(f => {
-            const currentFields = isEdit ? (editOrg?.allowedFields || []) : newOrg.allowedFields;
-            const selected = currentFields.includes(f);
-            return (
-              <div key={f} onClick={() => toggleField(f, isEdit)}
-                style={{ padding: '10px 14px', borderRadius: 8, cursor: 'pointer',
-                  background: selected ? theme.accentGlow : theme.bg,
-                  border: `1px solid ${selected ? theme.accent : theme.border}`,
-                  color: selected ? theme.accent : theme.textSecondary,
-                  fontSize: 13, fontWeight: selected ? 600 : 400, transition: 'all 0.15s' }}>
-                {selected ? '✓ ' : ''}{f}
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={onClose}
-            style={{ flex: 1, padding: '11px', borderRadius: 8,
-              border: `1px solid ${theme.border}`, background: 'transparent',
-              color: theme.textSecondary, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-            Cancel
-          </button>
-          <button onClick={onSave} disabled={loading}
-            style={{ flex: 1, padding: '11px', borderRadius: 8, border: 'none',
-              background: theme.accent, color: 'white',
-              cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-            {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Register Organization'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div>
@@ -188,7 +204,9 @@ export default function Organizations() {
           background: msg.type === 'success' ? `${theme.success}15` : `${theme.danger}15`,
           border: `1px solid ${msg.type === 'success' ? theme.success : theme.danger}30`,
           color: msg.type === 'success' ? theme.success : theme.danger }}>
-          {msg.type === 'success' ? '✓' : '✗'} {msg.text}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {msg.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />} {msg.text}
+          </span>
         </div>
       )}
 
@@ -256,12 +274,30 @@ export default function Organizations() {
       )}
 
       {showAdd && (
-        <Modal title="Register New Organization" isEdit={false}
-          onSave={handleRegister} onClose={() => setShowAdd(false)} />
+        <OrgModal
+          title="Register New Organization"
+          isEdit={false}
+          onSave={handleRegister}
+          onClose={() => setShowAdd(false)}
+          loading={loading}
+          newOrg={newOrg}
+          setNewOrg={setNewOrg}
+          editOrg={editOrg}
+          setEditOrg={setEditOrg}
+        />
       )}
       {editOrg && (
-        <Modal title={`Edit — ${editOrg.orgName}`} isEdit={true}
-          onSave={handleEdit} onClose={() => setEditOrg(null)} />
+        <OrgModal
+          title={`Edit — ${editOrg.orgName}`}
+          isEdit={true}
+          onSave={handleEdit}
+          onClose={() => setEditOrg(null)}
+          loading={loading}
+          newOrg={newOrg}
+          setNewOrg={setNewOrg}
+          editOrg={editOrg}
+          setEditOrg={setEditOrg}
+        />
       )}
     </div>
   );

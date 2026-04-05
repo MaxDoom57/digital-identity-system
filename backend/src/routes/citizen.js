@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
         const existing = await pool.request()
             .input('nic', sql.NVarChar, nicNumber)
             .input('email', sql.NVarChar, email)
-            .query('SELECT id FROM CitizenRegistration WHERE nicNumber=@nic OR email=@email');
+            .query('SELECT 1 AS found FROM CitizenRegistration WHERE nicNumber=@nic OR email=@email');
         if (existing.recordset.length > 0) {
             return res.status(400).json({ error: 'NIC number or email already registered' });
         }
@@ -55,10 +55,9 @@ router.post('/register', async (req, res) => {
 
         // Notify admin
         await pool.request()
-            .input('title', sql.NVarChar, 'New Registration Pending')
-            .input('message', sql.NVarChar, `${fullName} (${nicNumber}) has submitted a registration request.`)
-            .query(`INSERT INTO Notification (recipientId,recipientType,title,message,type)
-        VALUES ('admin','ADMIN',@title,@message,'REGISTRATION')`);
+            .input('message', sql.NVarChar, `New Registration Pending: ${fullName} (${nicNumber}) has submitted a registration request.`)
+            .query(`INSERT INTO Notification (recipientId,recipientType,message,type)
+        VALUES ('admin','ADMIN',@message,'REGISTRATION')`);
 
         res.json({ success: true, citizenId, message: 'Registration submitted. Awaiting admin approval.' });
     } catch (err) {
@@ -162,6 +161,33 @@ router.post('/offline-token', authenticateToken, async (req, res) => {
     } catch (err) {
         const msg = err.response?.data?.error || err.message;
         res.status(500).json({ error: msg });
+    }
+});
+
+// Get active organizations (for consent manager — citizen-accessible)
+router.get('/orgs', authenticateToken, async (req, res) => {
+    try {
+        const pool = await getPool();
+        const result = await pool.request()
+            .query('SELECT orgId, orgName FROM OrganizationUser WHERE isActive = 1');
+        const orgs = result.recordset;
+
+        // Enrich with sector/allowedFields from blockchain
+        let blockchainMap = {};
+        try {
+            const bcOrgs = await queryChaincode('orgpermission', 'GetAllOrganizations', []);
+            (Array.isArray(bcOrgs) ? bcOrgs : []).forEach(o => { blockchainMap[o.orgId] = o; });
+        } catch { }
+
+        const merged = orgs.map(o => ({
+            orgId: o.orgId,
+            orgName: o.orgName,
+            sector: blockchainMap[o.orgId]?.sector || 'Government',
+            allowedFields: blockchainMap[o.orgId]?.allowedFields || [],
+        }));
+        res.json(merged);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 

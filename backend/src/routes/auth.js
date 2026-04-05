@@ -52,15 +52,49 @@ router.post('/login', async (req, res) => {
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
+            const mustChangePassword = org.mustChangePassword === true || org.mustChangePassword === 1;
             const token = jwt.sign(
-                { id: org.orgId, username: org.orgId, role: 'organization' },
+                { id: org.orgId, username: org.orgId, role: 'organization', mustChangePassword },
                 process.env.JWT_SECRET,
                 { expiresIn: process.env.JWT_EXPIRES_IN }
             );
-            return res.json({ token, role: 'organization', orgId: org.orgId, orgName: org.orgName });
+            return res.json({ token, role: 'organization', orgId: org.orgId, orgName: org.orgName, mustChangePassword });
         }
 
         return res.status(400).json({ error: 'Invalid role' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Organization — change password (first-time setup)
+router.post('/org/change-password', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: 'No token' });
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.role !== 'organization') return res.status(403).json({ error: 'Forbidden' });
+
+        const { newPassword } = req.body;
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+        const pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input('orgId', sql.NVarChar, decoded.id)
+            .input('hash', sql.NVarChar, passwordHash)
+            .query('UPDATE OrganizationUser SET passwordHash = @hash, mustChangePassword = 0 WHERE orgId = @orgId');
+
+        // Issue a fresh token with mustChangePassword = false
+        const newToken = jwt.sign(
+            { id: decoded.id, username: decoded.id, role: 'organization', mustChangePassword: false },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
+        res.json({ success: true, token: newToken });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
