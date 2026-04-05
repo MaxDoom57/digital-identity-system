@@ -1,0 +1,18 @@
+export const theme = {
+    bg: '#0a0f1e',
+    bgCard: '#0d1526',
+    bgHover: '#111d35',
+    border: '#1e3a5f',
+    borderLight: '#1a2f4a',
+    accent: '#0ea5e9',
+    accentDark: '#0284c7',
+    accentGlow: 'rgba(14,165,233,0.15)',
+    success: '#10b981',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    textPrimary: '#e2e8f0',
+    textSecondary: '#94a3b8',
+    textMuted: '#475569',
+    fontFamily: "'IBM Plex Sans', sans-serif",
+    fontMono: "'IBM Plex Mono', monospace",
+};

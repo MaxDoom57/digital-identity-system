@@ -1,0 +1,21 @@
+{
+  "name": "offline-token-tests",
+  "version": "1.0.0",
+  "description": "Jest integration tests for verify_offline_token() — thesis security validation",
+  "private": true,
+  "scripts": {
+    "test": "jest --runInBand --verbose",
+    "test:ci": "jest --runInBand --verbose --forceExit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 15000,
+    "testMatch": ["**/*.test.js"]
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
