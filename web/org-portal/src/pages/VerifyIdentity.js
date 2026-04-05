@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import API from '../api';
 import { theme } from '../styles/theme';
+import { Camera, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 export default function VerifyIdentity() {
   const [mode, setMode] = useState('manual'); // 'manual' | 'qr'
@@ -62,8 +63,8 @@ export default function VerifyIdentity() {
       display: 'flex', gap: 16, alignItems: 'flex-start' }}>
       <div style={{ fontSize: 11, color: highlight ? theme.success : theme.textMuted,
         textTransform: 'uppercase', letterSpacing: '0.08em', width: 120, flexShrink: 0,
-        paddingTop: 2, fontWeight: 600 }}>
-        {label}{highlight ? ' ✓' : ''}
+        paddingTop: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {label}{highlight ? <CheckCircle size={11} /> : ''}
       </div>
       <div style={{ fontSize: 13, color: theme.textPrimary, fontWeight: 500, wordBreak: 'break-all' }}>
         {String(value || '—')}
@@ -139,7 +140,9 @@ export default function VerifyIdentity() {
                   background: theme.bg, transition: 'border-color 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = theme.accent}
                 onMouseLeave={e => e.currentTarget.style.borderColor = theme.border}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                  <Camera size={36} color={theme.textMuted} />
+                </div>
                 <div style={{ fontSize: 13, color: theme.textSecondary, marginBottom: 4 }}>
                   Click to upload QR image
                 </div>
@@ -178,7 +181,7 @@ export default function VerifyIdentity() {
         <div style={{ background: `${theme.danger}15`, border: `1px solid ${theme.danger}30`,
           borderRadius: 10, padding: '16px 20px', marginBottom: 20,
           color: theme.danger, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
-          ✗ {error}
+          <XCircle size={16} /> {error}
         </div>
       )}
 
@@ -191,7 +194,9 @@ export default function VerifyIdentity() {
             paddingBottom: 20, borderBottom: `1px solid ${theme.border}` }}>
             <div style={{ width: 48, height: 48, borderRadius: '50%',
               background: `${theme.success}20`, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: 22 }}>✓</div>
+              justifyContent: 'center' }}>
+              <CheckCircle size={24} color={theme.success} />
+            </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 700, color: theme.success, marginBottom: 2 }}>
                 Identity Verified on Blockchain
@@ -234,8 +239,9 @@ export default function VerifyIdentity() {
           </div>
 
           <div style={{ background: `${theme.warning}10`, border: `1px solid ${theme.warning}30`,
-            borderRadius: 8, padding: '12px 16px', fontSize: 12, color: theme.warning }}>
-            ⚠ Only displaying fields permitted by admin policy and citizen consent
+            borderRadius: 8, padding: '12px 16px', fontSize: 12, color: theme.warning,
+            display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertTriangle size={14} /> Only displaying fields permitted by admin policy and citizen consent
           </div>
         </div>
       )}

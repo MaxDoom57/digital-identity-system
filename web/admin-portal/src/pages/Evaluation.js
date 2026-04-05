@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api';
-import { Activity, Zap, Shield, CheckCircle } from 'lucide-react';
+import { theme } from '../styles/theme';
+import { Activity, Zap, Shield, CheckCircle, Camera, Fingerprint, Layers } from 'lucide-react';
 
 export default function Evaluation() {
     const [systemStatus, setSystemStatus] = useState(null);
@@ -45,15 +46,15 @@ export default function Evaluation() {
         } finally { setLoading(l => ({ ...l, throughput: false })); }
     };
 
-    const cardStyle = { background: 'white', borderRadius: 12, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 20 };
+    const cardStyle = { background: theme.bgCard, borderRadius: 12, padding: 24, border: `1px solid ${theme.border}`, marginBottom: 20 };
 
     return (
         <div>
             <h1 style={{
-                fontSize: 28, fontWeight: 'bold', color: '#1e3a5f', marginBottom: 8,
+                fontSize: 28, fontWeight: 'bold', color: theme.textPrimary, marginBottom: 8,
                 display: 'flex', alignItems: 'center', gap: 12
             }}><Activity size={28} />System Evaluation</h1>
-            <p style={{ color: '#6b7280', marginBottom: 32 }}>Performance metrics and test results for research evaluation</p>
+            <p style={{ color: theme.textSecondary, marginBottom: 32 }}>Performance metrics and test results for research evaluation</p>
 
             {/* System Status */}
             <div style={cardStyle}>
@@ -69,18 +70,18 @@ export default function Evaluation() {
                             const isGood = displayVal === 'online' || displayVal === 'deployed' ||
                                 (typeof displayVal === 'string' && displayVal.includes('deployed'));
                             return (
-                                <div key={key} style={{ background: '#f8fafc', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>{key}</div>
-                                    <div style={{ fontWeight: 600, color: isGood ? '#059669' : '#dc2626', fontSize: 13 }}>
+                                <div key={key} style={{ background: theme.bg, borderRadius: 8, padding: 12, textAlign: 'center', border: `1px solid ${theme.borderLight}` }}>
+                                    <div style={{ fontSize: 12, color: theme.textSecondary, marginBottom: 4, textTransform: 'uppercase' }}>{key}</div>
+                                    <div style={{ fontWeight: 600, color: isGood ? theme.success : theme.danger, fontSize: 13 }}>
                                         {String(displayVal)}
                                     </div>
-                                    {val?.latencyMs && <div style={{ fontSize: 11, color: '#6b7280' }}>{val.latencyMs}ms</div>}
+                                    {val?.latencyMs && <div style={{ fontSize: 11, color: theme.textSecondary }}>{val.latencyMs}ms</div>}
                                 </div>
                             );
                         })}
                     </div>
                 ) : (
-                    <div style={{ color: '#6b7280' }}>Loading system status...</div>
+                    <div style={{ color: theme.textSecondary }}>Loading system status...</div>
                 )}
             </div>
 
@@ -101,19 +102,19 @@ export default function Evaluation() {
                 {latencyResult ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
                         {[
-                            { label: 'Average', value: `${latencyResult.avgLatencyMs}ms`, color: '#2563eb' },
-                            { label: 'Minimum', value: `${latencyResult.minLatencyMs}ms`, color: '#059669' },
-                            { label: 'Maximum', value: `${latencyResult.maxLatencyMs}ms`, color: '#dc2626' },
+                            { label: 'Average', value: `${latencyResult.avgLatencyMs}ms`, color: theme.accent },
+                            { label: 'Minimum', value: `${latencyResult.minLatencyMs}ms`, color: theme.success },
+                            { label: 'Maximum', value: `${latencyResult.maxLatencyMs}ms`, color: theme.danger },
                             { label: 'Iterations', value: latencyResult.iterations, color: '#7c3aed' },
                         ].map(item => (
-                            <div key={item.label} style={{ background: '#f8fafc', borderRadius: 8, padding: 16, textAlign: 'center' }}>
-                                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>{item.label}</div>
+                            <div key={item.label} style={{ background: theme.bg, borderRadius: 8, padding: 16, textAlign: 'center', border: `1px solid ${theme.borderLight}` }}>
+                                <div style={{ fontSize: 12, color: theme.textSecondary, marginBottom: 4 }}>{item.label}</div>
                                 <div style={{ fontSize: 24, fontWeight: 'bold', color: item.color }}>{item.value}</div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p style={{ color: '#6b7280', fontSize: 14 }}>Click "Run Test" to measure blockchain query latency</p>
+                    <p style={{ color: theme.textSecondary, fontSize: 14 }}>Click "Run Test" to measure blockchain query latency</p>
                 )}
             </div>
 
@@ -135,18 +136,18 @@ export default function Evaluation() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
                         {[
                             { label: 'TPS', value: throughputResult.tps, color: '#7c3aed' },
-                            { label: 'Successful', value: throughputResult.successful, color: '#059669' },
-                            { label: 'Avg Latency', value: `${throughputResult.avgLatencyMs}ms`, color: '#2563eb' },
-                            { label: 'Total Time', value: `${throughputResult.totalTimeMs}ms`, color: '#d97706' },
+                            { label: 'Successful', value: throughputResult.successful, color: theme.success },
+                            { label: 'Avg Latency', value: `${throughputResult.avgLatencyMs}ms`, color: theme.accent },
+                            { label: 'Total Time', value: `${throughputResult.totalTimeMs}ms`, color: theme.warning },
                         ].map(item => (
-                            <div key={item.label} style={{ background: '#f8fafc', borderRadius: 8, padding: 16, textAlign: 'center' }}>
-                                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>{item.label}</div>
+                            <div key={item.label} style={{ background: theme.bg, borderRadius: 8, padding: 16, textAlign: 'center', border: `1px solid ${theme.borderLight}` }}>
+                                <div style={{ fontSize: 12, color: theme.textSecondary, marginBottom: 4 }}>{item.label}</div>
                                 <div style={{ fontSize: 24, fontWeight: 'bold', color: item.color }}>{item.value}</div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p style={{ color: '#6b7280', fontSize: 14 }}>Click "Run Test" to measure transaction throughput</p>
+                    <p style={{ color: theme.textSecondary, fontSize: 14 }}>Click "Run Test" to measure transaction throughput</p>
                 )}
             </div>
 
@@ -158,9 +159,9 @@ export default function Evaluation() {
                     </h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
                         {Object.entries(biometricMetrics).map(([mode, metrics]) => (
-                            <div key={mode} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
-                                <div style={{ fontWeight: 600, color: '#1e3a5f', marginBottom: 12, textTransform: 'capitalize', fontSize: 16 }}>
-                                    {mode === 'multimodal' ? '🔐 Multimodal (Fusion)' : mode === 'face' ? '📷 Face Recognition' : '🔏 Fingerprint'}
+                            <div key={mode} style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.bg }}>
+                                <div style={{ fontWeight: 600, color: theme.textPrimary, marginBottom: 12, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    {mode === 'multimodal' ? <><Layers size={16} color={theme.accent} /> Multimodal (Fusion)</> : mode === 'face' ? <><Camera size={16} color={theme.accent} /> Face Recognition</> : <><Fingerprint size={16} color={theme.accent} /> Fingerprint</>}
                                 </div>
                                 {[
                                     { label: 'FAR', value: `${(metrics.FAR * 100).toFixed(3)}%`, desc: 'False Acceptance Rate' },
@@ -170,10 +171,10 @@ export default function Evaluation() {
                                 ].map(item => (
                                     <div key={item.label} style={{
                                         display: 'flex', justifyContent: 'space-between',
-                                        padding: '6px 0', borderBottom: '1px solid #f3f4f6', fontSize: 13
+                                        padding: '6px 0', borderBottom: `1px solid ${theme.borderLight}`, fontSize: 13
                                     }}>
-                                        <span style={{ color: '#6b7280' }}>{item.desc}</span>
-                                        <span style={{ fontWeight: 600, color: '#111827' }}>{item.value}</span>
+                                        <span style={{ color: theme.textSecondary }}>{item.desc}</span>
+                                        <span style={{ fontWeight: 600, color: theme.textPrimary }}>{item.value}</span>
                                     </div>
                                 ))}
                                 {metrics.note && (

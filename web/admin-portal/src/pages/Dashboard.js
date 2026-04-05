@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../api';
 import { theme } from '../styles/theme';
 import { Users, Building2, Shield, Activity, Zap, Database, CheckCircle, RefreshCw } from 'lucide-react';
@@ -45,7 +45,10 @@ export default function Dashboard() {
     const [stats, setStats] = useState({ citizens: 0, orgs: 0, verified: 0, pending: 0 });
     const [systemStatus, setSystemStatus] = useState(null);
     const [latency, setLatency] = useState(null);
-    const [auditData, setAuditData] = useState([]);
+    const stableAuditData = useRef(
+        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(label => ({ label, value: Math.floor(Math.random() * 20) + 5 }))
+    );
+    const [auditData, setAuditData] = useState(stableAuditData.current);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => { loadAllData(); }, []);
@@ -72,8 +75,7 @@ export default function Dashboard() {
             const latencyRes = await API.get('/api/evaluation/latency?iterations=5');
             setLatency(latencyRes.data);
 
-            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            setAuditData(days.map(label => ({ label, value: Math.floor(Math.random() * 20) + 5 })));
+            setAuditData(stableAuditData.current);
         } catch (err) {
             console.error(err);
         } finally {

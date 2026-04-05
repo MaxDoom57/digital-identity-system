@@ -29,8 +29,8 @@ router.post('/org/register', authenticateToken, requireRole('admin'), async (req
             orgId, orgName, sector, JSON.stringify(allowedFields), req.user.username
         ]);
 
-        // Create org login credentials
-        const rawPassword = accessKey || 'Org@2025';
+        // Create org login credentials — default first-time key is 00000
+        const rawPassword = accessKey || '00000';
         const passwordHash = await bcrypt.hash(rawPassword, 10);
         const pool = await getPool();
         await pool.request()
@@ -39,22 +39,43 @@ router.post('/org/register', authenticateToken, requireRole('admin'), async (req
             .input('passwordHash', sql.NVarChar, passwordHash)
             .query(`
                 IF NOT EXISTS (SELECT 1 FROM OrganizationUser WHERE orgId = @orgId)
-                    INSERT INTO OrganizationUser (orgId, orgName, passwordHash) VALUES (@orgId, @orgName, @passwordHash)
+                    INSERT INTO OrganizationUser (orgId, orgName, passwordHash, mustChangePassword) VALUES (@orgId, @orgName, @passwordHash, 1)
                 ELSE
-                    UPDATE OrganizationUser SET orgName = @orgName, passwordHash = @passwordHash WHERE orgId = @orgId
+                    UPDATE OrganizationUser SET orgName = @orgName, passwordHash = @passwordHash, mustChangePassword = 1 WHERE orgId = @orgId
             `);
 
-        res.json({ success: true, message: 'Organization registered', defaultAccessKey: accessKey ? undefined : 'Org@2025' });
+        res.json({ success: true, message: 'Organization registered', defaultAccessKey: '00000' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Get all organizations
+// Get all organizations — MSSQL is primary source; blockchain enriches with sector/allowedFields
 router.get('/orgs', authenticateToken, requireRole('admin'), async (req, res) => {
     try {
-        const orgs = await queryChaincode('orgpermission', 'GetAllOrganizations', []);
-        res.json(orgs);
+        const pool = await getPool();
+        const sqlResult = await pool.request()
+            .query('SELECT orgId, orgName, isActive, createdAt FROM OrganizationUser WHERE isActive = 1');
+        const mssqlOrgs = sqlResult.recordset;
+
+        // Try to get blockchain data for allowedFields / sector
+        let blockchainMap = {};
+        try {
+            const bcOrgs = await queryChaincode('orgpermission', 'GetAllOrganizations', []);
+            const list = Array.isArray(bcOrgs) ? bcOrgs : [];
+            list.forEach(o => { blockchainMap[o.orgId] = o; });
+        } catch { /* Fabric may be unavailable — use SQL data only */ }
+
+        const merged = mssqlOrgs.map(o => ({
+            orgId: o.orgId,
+            orgName: o.orgName,
+            isActive: o.isActive,
+            createdAt: o.createdAt,
+            sector: blockchainMap[o.orgId]?.sector || 'Government',
+            allowedFields: blockchainMap[o.orgId]?.allowedFields || [],
+        }));
+
+        res.json(merged);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -105,10 +126,16 @@ router.get('/audit-all', authenticateToken, async (req, res) => {
 
 module.exports = router;
 
-// Delete organization
+// Delete organization — suspend on blockchain + deactivate in MSSQL
 router.delete('/org/:orgId', authenticateToken, requireRole('admin'), async (req, res) => {
     try {
-        await invokeChaincode('orgpermission', 'SuspendOrganization', [req.params.orgId]);
+        // Deactivate in MSSQL (blocks login immediately)
+        const pool = await getPool();
+        await pool.request()
+            .input('orgId', sql.NVarChar, req.params.orgId)
+            .query('UPDATE OrganizationUser SET isActive = 0 WHERE orgId = @orgId');
+        // Also suspend on blockchain if reachable
+        try { await invokeChaincode('orgpermission', 'SuspendOrganization', [req.params.orgId]); } catch {}
         res.json({ success: true, message: 'Organization removed' });
     } catch (err) {
         res.status(500).json({ error: err.message });

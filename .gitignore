@@ -56,3 +56,15 @@ Desktop.ini
 # Testing
 coverage/
 .pytest_cache/
+
+# Claude AI session files
+.claude/
+
+# Extracted thesis text and scripts
+thesis_extracted_text.txt
+extract_pdf.py
+extract_pdf_to_file.py
+
+# Backend runtime logs
+backend/backend.log
+backend/backend.err

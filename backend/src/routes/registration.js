@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const sql = require('mssql');
 const QRCode = require('qrcode');
-const { invokeChaincode } = require('../services/fabricService');
+const { invokeChaincode, queryChaincode } = require('../services/fabricService');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const getPool = () => sql.connect({
@@ -36,12 +36,20 @@ router.post('/approve/:citizenId', authenticateToken, requireRole('admin'), asyn
         if (result.recordset.length === 0) return res.status(404).json({ error: 'Not found' });
         const citizen = result.recordset[0];
 
-        // Create DID on blockchain
+        // Create DID on blockchain (skip if already exists from a previous partial attempt)
         const did = `did:fabric:${citizenId}`;
-        await invokeChaincode('identity', 'CreateIdentity', [
-            citizenId, did, citizen.fullName, citizen.nicNumber,
-            citizen.biometricHash, ''
-        ]);
+        let identityExists = false;
+        try {
+            const existing = await queryChaincode('identity', 'IdentityExists', [did]);
+            identityExists = existing === true || existing === 'true';
+        } catch { }
+
+        if (!identityExists) {
+            await invokeChaincode('identity', 'CreateIdentity', [
+                citizenId, did, citizen.fullName, citizen.nicNumber,
+                citizen.biometricHash, ''
+            ]);
+        }
 
         // Log to audit chaincode
         const { v4: uuidv4 } = require('uuid');
@@ -66,9 +74,9 @@ router.post('/approve/:citizenId', authenticateToken, requireRole('admin'), asyn
         await pool.request()
             .input('cid', sql.NVarChar, citizenId)
             .input('did', sql.NVarChar, did)
-            .query(`INSERT INTO Notification (recipientId,recipientType,title,message,type)
-        VALUES (@cid,'CITIZEN','Registration Approved',
-        'Your digital identity has been approved. Your DID is: ' + @did,'APPROVAL')`);
+            .query(`INSERT INTO Notification (recipientId,recipientType,message,type)
+        VALUES (@cid,'CITIZEN',
+        'Registration Approved: Your digital identity has been approved. Your DID is: ' + @did,'APPROVAL')`);
 
         res.json({ success: true, did, message: 'Citizen approved and DID created on blockchain' });
     } catch (err) {
@@ -92,9 +100,9 @@ router.post('/reject/:citizenId', authenticateToken, requireRole('admin'), async
         await pool.request()
             .input('cid', sql.NVarChar, citizenId)
             .input('reason', sql.NVarChar, reason || 'Registration rejected by admin')
-            .query(`INSERT INTO Notification (recipientId,recipientType,title,message,type)
-        VALUES (@cid,'CITIZEN','Registration Rejected',
-        'Your registration was rejected. Reason: ' + @reason,'REJECTION')`);
+            .query(`INSERT INTO Notification (recipientId,recipientType,message,type)
+        VALUES (@cid,'CITIZEN',
+        'Registration Rejected: Your registration was rejected. Reason: ' + @reason,'REJECTION')`);
 
         res.json({ success: true, message: 'Registration rejected' });
     } catch (err) {

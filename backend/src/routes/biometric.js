@@ -26,9 +26,9 @@ const forwardRequest = async (endpoint, req, res) => {
 
 router.post('/fingerprint/enroll', authenticateToken, (req, res) => forwardRequest('/api/fingerprint/enroll', req, res));
 router.post('/fingerprint/verify', authenticateToken, (req, res) => forwardRequest('/api/fingerprint/verify', req, res));
-router.post('/face/enroll', authenticateToken, (req, res) => forwardRequest('/api/face/enroll', req, res));
+router.post('/face/enroll', (req, res) => forwardRequest('/api/face/enroll', req, res));
 router.post('/face/verify', authenticateToken, (req, res) => forwardRequest('/api/face/verify', req, res));
-router.post('/liveness/check', authenticateToken, (req, res) => forwardRequest('/api/liveness/check', req, res));
+router.post('/liveness/check', (req, res) => forwardRequest('/api/liveness/check', req, res));
 router.post('/liveness/multiframe', authenticateToken, (req, res) => forwardRequest('/api/liveness/multiframe', req, res));
 router.post('/offline/generate-token', authenticateToken, (req, res) => forwardRequest('/api/offline/generate-token', req, res));
 router.post('/offline/verify-token', authenticateToken, (req, res) => forwardRequest('/api/offline/verify-token', req, res));

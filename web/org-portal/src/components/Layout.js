@@ -6,6 +6,9 @@ import { Grid, Users, FilePlus, Shield, LogOut, ExternalLink } from 'lucide-reac
 export default function Layout({ onLogout }) {
     const navigate = useNavigate();
     const handleLogout = () => { onLogout(); navigate('/login'); };
+    const orgInfo = JSON.parse(localStorage.getItem('orgInfo') || '{}');
+    const orgId   = orgInfo.orgId || '—';
+    const orgName = orgInfo.orgName || 'Organization';
 
     const navItemStyle = ({ isActive }) => ({
         display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
@@ -22,7 +25,8 @@ export default function Layout({ onLogout }) {
             <div style={{ width: 260, background: theme.bgCard, borderRight: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '32px 24px', borderBottom: `1px solid ${theme.border}` }}>
                     <div style={{ fontSize: 12, color: theme.accent, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Service Partner</div>
-                    <div style={{ fontSize: 18, color: theme.textPrimary, fontWeight: 700 }}>Org Identity Control</div>
+                    <div style={{ fontSize: 16, color: theme.textPrimary, fontWeight: 700, marginBottom: 2 }}>{orgName}</div>
+                    <div style={{ fontSize: 11, color: theme.textMuted, fontFamily: 'monospace' }}>{orgId}</div>
                 </div>
 
                 <nav style={{ flex: 1, padding: 20 }}>
@@ -46,7 +50,7 @@ export default function Layout({ onLogout }) {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <header style={{ height: 64, borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: theme.textMuted, fontSize: 12 }}>
-                        <span style={{ fontFamily: theme.fontMono }}>SID: ORG-00124</span>
+                        <span style={{ fontFamily: theme.fontMono }}>{orgId}</span>
                         <div style={{ width: 1, height: 16, background: theme.border }} />
                         <span>Connected to identitychannel</span>
                     </div>

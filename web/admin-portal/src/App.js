@@ -16,7 +16,7 @@ function App() {
   const handleLogout = () => { localStorage.removeItem('token'); setToken(null); };
 
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={!token ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
         <Route path="/" element={token ? <Layout onLogout={handleLogout} /> : <Navigate to="/login" />}>

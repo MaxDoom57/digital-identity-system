@@ -23,7 +23,7 @@ export default function ConsentManager() {
     try {
       const [profileRes, orgsRes] = await Promise.all([
         API.get(`/api/consent/profile/${citizenId}`).catch(() => ({ data: { permissions: {} } })),
-        API.get('/api/admin/orgs').catch(() => ({ data: [] }))
+        API.get('/api/citizen/orgs').catch(() => ({ data: [] }))
       ]);
       setProfile(profileRes.data);
       setOrgs(Array.isArray(orgsRes.data) ? orgsRes.data : []);
