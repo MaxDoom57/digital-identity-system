@@ -75,6 +75,7 @@ export default function BiometricEnroll() {
             if (enrollRes.data.success) {
                 // Step 3 — Update identity on blockchain with new biometric hash
                 const did = `did:fabric:${citizenId}`;
+                if (enrollRes.data?.biometricHash) console.log('[DEV] biometricHash for', citizenId, ':', enrollRes.data.biometricHash);
                 setResult({
                     ...enrollRes.data,
                     did,
@@ -199,9 +200,9 @@ export default function BiometricEnroll() {
                             </h3>
                             <div style={{ fontSize: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 <div style={{ background: theme.bg, borderRadius: 6, padding: 12, border: `1px solid ${theme.borderLight}` }}>
-                                    <div style={{ color: theme.textSecondary, fontSize: 12, marginBottom: 4 }}>Biometric Hash (store on blockchain)</div>
-                                    <div style={{ fontFamily: theme.fontMono, fontSize: 11, wordBreak: 'break-all', color: theme.textPrimary }}>
-                                        {result.biometricHash}
+                                    <div style={{ color: theme.textSecondary, fontSize: 12, marginBottom: 4 }}>Biometric Data</div>
+                                    <div style={{ fontSize: 12, color: theme.success, fontWeight: 600 }}>
+                                        ✓ Feature vector captured ({result.biometricHash ? Math.round(result.biometricHash.length / 1024) + ' KB' : '—'})
                                     </div>
                                 </div>
                                 {result.qualityScore && (

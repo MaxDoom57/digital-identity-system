@@ -12,7 +12,13 @@ export default function Dashboard({ citizenData }) {
         try {
             const res = await API.get('/api/citizen/profile');
             setProfile(res.data);
-        } catch { } finally { setLoading(false); }
+        } catch (err) {
+            if (err.response?.status === 404) {
+                // Citizen record not in DB — stale token, clear and go to login
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
+        } finally { setLoading(false); }
     };
 
     const status = profile?.citizen?.status || citizenData?.status || 'PENDING';

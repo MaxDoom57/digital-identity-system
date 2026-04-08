@@ -12,7 +12,20 @@ router.get('/latency', authenticateToken, async (req, res) => {
 
         for (let i = 0; i < iterations; i++) {
             const start = Date.now();
-            await queryChaincode('identity', 'IdentityExists', [`did:fabric:TEST${i}`]);
+            try {
+                await queryChaincode('identity', 'IdentityExists', [`did:fabric:TEST${i}`]);
+            } catch {
+                // Fabric offline — record a null latency and stop
+                return res.json({
+                    testType: 'Query Latency',
+                    fabricStatus: 'offline',
+                    iterations: 0,
+                    avgLatencyMs: null,
+                    minLatencyMs: null,
+                    maxLatencyMs: null,
+                    latencies: []
+                });
+            }
             latencies.push(Date.now() - start);
         }
 
@@ -22,6 +35,7 @@ router.get('/latency', authenticateToken, async (req, res) => {
 
         res.json({
             testType: 'Query Latency',
+            fabricStatus: 'online',
             iterations,
             avgLatencyMs: Math.round(avg),
             minLatencyMs: min,

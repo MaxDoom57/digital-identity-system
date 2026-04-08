@@ -44,7 +44,6 @@ const DonutChart = ({ percentage, color, label }) => {
 export default function Dashboard() {
     const [stats, setStats] = useState({ citizens: 0, orgs: 0, verified: 0, pending: 0 });
     const [systemStatus, setSystemStatus] = useState(null);
-    const [latency, setLatency] = useState(null);
     const stableAuditData = useRef(
         ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(label => ({ label, value: Math.floor(Math.random() * 20) + 5 }))
     );
@@ -56,10 +55,11 @@ export default function Dashboard() {
     const loadAllData = async () => {
         setLoading(true);
         try {
-            const orgsRes = await API.get('/api/admin/orgs');
+            const [orgsRes, regsRes] = await Promise.all([
+                API.get('/api/admin/orgs'),
+                API.get('/api/registration/pending'),
+            ]);
             const orgs = Array.isArray(orgsRes.data) ? orgsRes.data : [];
-
-            const regsRes = await API.get('/api/registration/pending');
             const regs = regsRes.data.registrations || [];
 
             setStats({
@@ -68,19 +68,18 @@ export default function Dashboard() {
                 verified: regs.filter(r => r.status === 'APPROVED').length,
                 pending: regs.filter(r => r.status === 'PENDING').length
             });
-
-            const statusRes = await API.get('/api/evaluation/system-status');
-            setSystemStatus(statusRes.data.status);
-
-            const latencyRes = await API.get('/api/evaluation/latency?iterations=5');
-            setLatency(latencyRes.data);
-
             setAuditData(stableAuditData.current);
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
+
+        // Load system status separately so Fabric being offline doesn't break the main stats
+        try {
+            const statusRes = await API.get('/api/evaluation/system-status');
+            setSystemStatus(statusRes.data.status);
+        } catch { }
     };
 
     const cards = [
@@ -157,10 +156,9 @@ export default function Dashboard() {
                     }}>
                         <Zap size={16} color={theme.warning} /> Blockchain Performance
                     </h2>
-                    {latency ? (
+                    {systemStatus?.blockchain?.status === 'online' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                             {[
-                                { label: 'Query Latency', value: `${latency.avgLatencyMs}ms`, bar: Math.min(latency.avgLatencyMs / 5, 100), color: theme.accent },
                                 { label: 'Transaction Latency', value: '420ms', bar: 45, color: '#7c3aed' },
                                 { label: 'Block Propagation', value: '1.2s', bar: 20, color: theme.success },
                             ].map(item => (
@@ -175,7 +173,11 @@ export default function Dashboard() {
                                 </div>
                             ))}
                         </div>
-                    ) : <div style={{ color: theme.textMuted, fontSize: 12 }}>Measuring performance...</div>}
+                    ) : (
+                        <div style={{ color: theme.textMuted, fontSize: 12 }}>
+                            Fabric peer offline — performance metrics unavailable
+                        </div>
+                    )}
                 </div>
 
                 <div style={cardStyle}>

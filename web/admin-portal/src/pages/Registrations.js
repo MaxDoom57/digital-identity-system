@@ -152,7 +152,7 @@ export default function Registrations() {
                                 </td>
                                 <td style={{ padding: '12px 16px' }}><Badge status={r.status} /></td>
                                 <td style={{ padding: '12px 16px' }}>
-                                    <button onClick={() => setSelected(r)}
+                                    <button onClick={() => { setSelected(r); if (r.biometricHash) console.log('[DEV] biometricHash for', r.citizenId, ':', r.biometricHash); }}
                                         style={{
                                             padding: '5px 12px', borderRadius: 5, border: `1px solid ${theme.border}`,
                                             background: 'transparent', color: theme.textSecondary, cursor: 'pointer',
@@ -203,11 +203,10 @@ export default function Registrations() {
                                 </div>
                             ))}
                             <div style={{ display: 'flex', gap: 12, padding: '8px 0' }}>
-                                <span style={{ fontSize: 12, color: theme.textMuted, width: 120, flexShrink: 0 }}>Biometric Hash</span>
-                                <span style={{
-                                    fontSize: 11, color: theme.accent, fontFamily: theme.fontMono,
-                                    wordBreak: 'break-all'
-                                }}>{selected.biometricHash}</span>
+                                <span style={{ fontSize: 12, color: theme.textMuted, width: 120, flexShrink: 0 }}>Biometric</span>
+                                <span style={{ fontSize: 12, color: selected.biometricHash ? theme.success : theme.warning }}>
+                                    {selected.biometricHash ? '✓ Enrolled' : 'Not enrolled'}
+                                </span>
                             </div>
                         </div>
 

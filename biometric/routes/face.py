@@ -3,6 +3,7 @@ from utils.image_processing import decode_base64_image, preprocess_face, encode_
 from utils.hashing import compute_feature_hash, compute_biometric_hash
 import numpy as np
 import cv2
+import base64
 
 face_bp = Blueprint('face', __name__)
 
@@ -37,19 +38,22 @@ def enroll_face():
             return jsonify({'error': 'No image provided'}), 400
 
         img = decode_base64_image(data['image'])
-        if img is None:
-            return jsonify({'error': 'Invalid image'}), 400
+        if img is None or img.size == 0:
+            return jsonify({'error': 'Invalid or empty image — please retake the photo'}), 400
 
         features, face_coords = extract_face_features(img)
 
         if features is None:
             return jsonify({'error': 'No face detected. Please ensure your face is clearly visible.'}), 400
 
-        feature_hash = compute_feature_hash(features)
+        # Store the feature vector (base64-encoded float32 bytes) so verification
+        # can use cosine similarity instead of exact hash comparison.
+        feature_bytes = features.astype(np.float32).tobytes()
+        feature_b64 = base64.b64encode(feature_bytes).decode('utf-8')
 
         return jsonify({
             'success': True,
-            'biometricHash': feature_hash,
+            'biometricHash': feature_b64,
             'faceDetected': True,
             'faceCoords': {'x': int(face_coords[0]), 'y': int(face_coords[1]),
                           'w': int(face_coords[2]), 'h': int(face_coords[3])},
@@ -69,18 +73,41 @@ def verify_face():
             return jsonify({'error': 'Image and storedHash required'}), 400
 
         img = decode_base64_image(data['image'])
+        if img is None or img.size == 0:
+            return jsonify({'error': 'Invalid or empty image — please retake the photo'}), 400
+
         features, _ = extract_face_features(img)
 
         if features is None:
             return jsonify({'error': 'No face detected'}), 400
 
-        current_hash = compute_feature_hash(features)
-        match = current_hash == data['storedHash']
+        stored_val = data['storedHash']
+
+        # Decode stored feature vector (base64 float32 bytes written during enroll)
+        try:
+            stored_bytes = base64.b64decode(stored_val)
+            stored_features = np.frombuffer(stored_bytes, dtype=np.float32)
+        except Exception:
+            return jsonify({'error': 'Stored biometric data is invalid — please re-enroll your face'}), 400
+
+        # Cosine similarity between current and stored feature vectors
+        cur = features.flatten().astype(np.float64)
+        sto = stored_features.flatten().astype(np.float64)
+
+        if cur.shape != sto.shape:
+            return jsonify({'error': 'Feature dimension mismatch — please re-enroll your face'}), 400
+
+        norm = np.linalg.norm(cur) * np.linalg.norm(sto)
+        similarity = float(np.dot(cur, sto) / norm) if norm > 0 else 0.0
+
+        THRESHOLD = 0.75
+        match = similarity >= THRESHOLD
 
         return jsonify({
             'success': True,
             'match': match,
-            'confidence': 1.0 if match else 0.0,
+            'verified': match,
+            'confidence': round(similarity, 4),
             'message': 'Face matched' if match else 'Face did not match'
         })
 

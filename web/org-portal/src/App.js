@@ -7,6 +7,7 @@ import CitizensList from './pages/CitizensList';
 import AddRecord from './pages/AddRecord';
 import AuditLog from './pages/AuditLog';
 import VerifyIdentity from './pages/VerifyIdentity';
+import ConsentRequests from './pages/ConsentRequests';
 import Layout from './components/Layout';
 
 // Decode JWT payload without verifying signature (client-side only)
@@ -46,6 +47,7 @@ function App() {
           <Route path="add-record/:citizenId" element={<AddRecord />} />
           <Route path="audit" element={<AuditLog />} />
           <Route path="verify" element={<VerifyIdentity />} />
+          <Route path="consent-requests" element={<ConsentRequests />} />
         </Route>
       </Routes>
     </BrowserRouter>

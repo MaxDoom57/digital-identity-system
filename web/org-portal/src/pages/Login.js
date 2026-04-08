@@ -55,12 +55,9 @@ export default function Login({ onLogin }) {
                         <Building2 size={18} style={{ position: 'absolute', left: 14, top: 12, color: theme.textMuted }} />
                         <input style={inputStyle} value={username} onChange={e => setUsername(e.target.value)} placeholder="Organization ID" required />
                     </div>
-                    <div style={{ marginBottom: 8, position: 'relative' }}>
+                    <div style={{ marginBottom: 24, position: 'relative' }}>
                         <Lock size={18} style={{ position: 'absolute', left: 14, top: 12, color: theme.textMuted }} />
                         <input type="password" style={inputStyle} value={password} onChange={e => setPassword(e.target.value)} placeholder="Access Key" required />
-                    </div>
-                    <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 24, paddingLeft: 2 }}>
-                        First time? Use the temporary key <span style={{ fontFamily: theme.fontMono, color: theme.textSecondary }}>00000</span> — you will be prompted to set a new one.
                     </div>
                     <button type="submit" disabled={loading} style={{ width: '100%', background: theme.accent, color: 'white', border: 'none', borderRadius: 8, padding: 14, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
                         {loading ? 'Verifying...' : 'Authorize Partner Access'}

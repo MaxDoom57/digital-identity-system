@@ -9,16 +9,30 @@ export default function Dashboard() {
     const [citizens, setCitizens] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const orgInfo = JSON.parse(localStorage.getItem('orgInfo') || '{}');
-    const orgName = orgInfo.orgName || orgInfo.orgId || 'Organization';
-    const orgId   = orgInfo.orgId || '—';
+    const [orgId, setOrgId]     = useState(JSON.parse(localStorage.getItem('orgInfo') || '{}').orgId || '—');
+    const [orgName, setOrgName] = useState(JSON.parse(localStorage.getItem('orgInfo') || '{}').orgName || '');
 
     useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
         try {
-            const res = await API.get('/api/orgrecords/citizens');
-            setCitizens(res.data.citizens || []);
+            const [citizensRes, meRes] = await Promise.all([
+                API.get('/api/orgrecords/citizens'),
+                API.get('/api/auth/org/me').catch(err => {
+                    if (err.response?.status === 403) {
+                        // Token has wrong role — clear stale session and go to login
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('orgInfo');
+                        window.location.href = '/login';
+                    }
+                    return { data: {} };
+                })
+            ]);
+            setCitizens(citizensRes.data.citizens || []);
+            if (meRes.data.orgId) {
+                setOrgId(meRes.data.orgId);
+                setOrgName(meRes.data.orgName);
+            }
         } catch { } finally { setLoading(false); }
     };
 
@@ -107,7 +121,7 @@ export default function Dashboard() {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
-                                {['Citizen ID', 'Full Name', 'NIC Number', 'DID', 'Enrolled', 'Action'].map(h => (
+                                {['Citizen ID', 'Full Name', 'NIC Number', 'Enrolled', 'Action'].map(h => (
                                     <th key={h} style={{ padding: '10px 16px', textAlign: 'left',
                                         fontSize: 11, color: theme.textMuted, fontWeight: 600,
                                         letterSpacing: '0.08em', textTransform: 'uppercase' }}>{h}</th>
@@ -126,11 +140,6 @@ export default function Dashboard() {
                                     </td>
                                     <td style={{ padding: '12px 16px', fontSize: 12, color: theme.textSecondary,
                                         fontFamily: theme.fontMono }}>{c.nicNumber}</td>
-                                    <td style={{ padding: '12px 16px', fontSize: 11, color: theme.textMuted,
-                                        fontFamily: theme.fontMono, maxWidth: 140, overflow: 'hidden',
-                                        textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {c.did || '—'}
-                                    </td>
                                     <td style={{ padding: '12px 16px', fontSize: 11, color: theme.textMuted }}>
                                         {c.linkedAt ? new Date(c.linkedAt).toLocaleDateString() : '—'}
                                     </td>

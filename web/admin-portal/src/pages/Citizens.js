@@ -25,6 +25,7 @@ export default function Citizens() {
         try {
             const did = `did:fabric:${searchDid}`;
             const res = await API.get(`/api/identity/${encodeURIComponent(did)}`);
+            if (res.data?.biometricHash) console.log('[DEV] biometricHash for', did, ':', res.data.biometricHash);
             setSearchResult(res.data);
         } catch (err) {
             setError('Identity not found on blockchain');
@@ -98,7 +99,9 @@ export default function Citizens() {
                             <Shield size={14} /> Identity Verified on Blockchain
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                            {Object.entries(searchResult).map(([k, v]) => (
+                            {Object.entries(searchResult)
+                                .filter(([k]) => k !== 'biometricHash')
+                                .map(([k, v]) => (
                                 <div key={k} style={{
                                     padding: '8px 12px', background: theme.bgCard,
                                     borderRadius: 6, border: `1px solid ${theme.borderLight}`
@@ -109,7 +112,7 @@ export default function Citizens() {
                                     }}>{k}</div>
                                     <div style={{
                                         fontSize: 12, color: theme.textPrimary, wordBreak: 'break-all',
-                                        fontFamily: ['did', 'biometricHash', 'ipfsCid'].includes(k) ? theme.fontMono : 'inherit'
+                                        fontFamily: ['did', 'ipfsCid'].includes(k) ? theme.fontMono : 'inherit'
                                     }}>
                                         {String(v)}
                                     </div>

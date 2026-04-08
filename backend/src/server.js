@@ -3,7 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env'), override: true });
 
 const app = express();
 
@@ -87,6 +87,34 @@ app.use('/api/evaluation',   apiLimiter,  require('./routes/evaluation'));
 app.use('/api/citizen',      apiLimiter,  require('./routes/citizen'));
 app.use('/api/registration', apiLimiter,  require('./routes/registration'));
 app.use('/api/orgrecords',   apiLimiter,  require('./routes/orgrecords'));
+app.use('/api/webauthn',     apiLimiter,  require('./routes/webauthn'));
+
+// Widen biometricHash column if it was created as NVARCHAR(500) — feature vectors are larger
+(async () => {
+  try {
+    const sql = require('mssql');
+    const pool = await sql.connect({
+      user: process.env.MSSQL_USER || 'sa',
+      password: process.env.MSSQL_PASSWORD,
+      server: process.env.MSSQL_HOST || 'localhost',
+      database: process.env.MSSQL_DATABASE,
+      options: { encrypt: false, trustServerCertificate: true }
+    });
+    await pool.request().query(`
+      IF EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME='CitizenRegistration'
+          AND COLUMN_NAME='biometricHash'
+          AND CHARACTER_MAXIMUM_LENGTH IS NOT NULL
+          AND CHARACTER_MAXIMUM_LENGTH < 10000
+      )
+      ALTER TABLE CitizenRegistration ALTER COLUMN biometricHash NVARCHAR(MAX)
+    `);
+    await pool.close();
+  } catch (e) {
+    console.warn('⚠️  Could not widen biometricHash column:', e.message);
+  }
+})();
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

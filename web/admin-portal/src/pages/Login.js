@@ -61,21 +61,9 @@ export default function Login({ onLogin }) {
                         <input style={inputStyle} value={username} onChange={e => setUsername(e.target.value)} placeholder="Administrator ID" required />
                     </div>
 
-                    <div style={{ marginBottom: 12, position: 'relative' }}>
+                    <div style={{ marginBottom: 28, position: 'relative' }}>
                         <Lock size={18} style={{ position: 'absolute', left: 14, top: 12, color: theme.textMuted }} />
                         <input type="password" style={inputStyle} value={password} onChange={e => setPassword(e.target.value)} placeholder="Access Key" required />
-                    </div>
-
-                    {/* Credential hint for development */}
-                    <div style={{
-                        marginBottom: 28, padding: '10px 14px',
-                        background: `${theme.accent}08`, border: `1px solid ${theme.border}`,
-                        borderRadius: 8, fontSize: 11, color: theme.textMuted,
-                        display: 'flex', justifyContent: 'space-between'
-                    }}>
-                        <span>ID: <span style={{ fontFamily: theme.fontMono, color: theme.textSecondary }}>admin</span></span>
-                        <span style={{ color: theme.borderLight }}>|</span>
-                        <span>Key: <span style={{ fontFamily: theme.fontMono, color: theme.textSecondary }}>Admin@2025</span></span>
                     </div>
 
                     <button type="submit" disabled={loading}

@@ -1,14 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { theme } from '../styles/theme';
-import { Grid, Users, FilePlus, Shield, LogOut, ExternalLink } from 'lucide-react';
+import { Grid, Users, Shield, LogOut, ExternalLink, FileCheck } from 'lucide-react';
+import API from '../api';
 
 export default function Layout({ onLogout }) {
     const navigate = useNavigate();
     const handleLogout = () => { onLogout(); navigate('/login'); };
-    const orgInfo = JSON.parse(localStorage.getItem('orgInfo') || '{}');
-    const orgId   = orgInfo.orgId || '—';
-    const orgName = orgInfo.orgName || 'Organization';
+    const [orgId, setOrgId]     = useState(JSON.parse(localStorage.getItem('orgInfo') || '{}').orgId || '—');
+    const [orgName, setOrgName] = useState(JSON.parse(localStorage.getItem('orgInfo') || '{}').orgName || '');
+    const [pendingCount, setPendingCount] = useState(0);
+
+    useEffect(() => {
+        // Always fetch from backend so org name is correct even without localStorage
+        API.get('/api/auth/org/me').then(res => {
+            setOrgId(res.data.orgId);
+            setOrgName(res.data.orgName);
+            localStorage.setItem('orgInfo', JSON.stringify({ orgId: res.data.orgId, orgName: res.data.orgName }));
+        }).catch(() => {});
+
+        API.get('/api/consent/org/requests').then(res => {
+            const pending = (res.data.requests || []).filter(r => r.status === 'PENDING').length;
+            setPendingCount(pending);
+        }).catch(() => {});
+    }, []);
 
     const navItemStyle = ({ isActive }) => ({
         display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
@@ -33,6 +48,17 @@ export default function Layout({ onLogout }) {
                     <div style={{ fontSize: 11, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, paddingLeft: 12 }}>Navigation</div>
                     <NavLink to="/" style={navItemStyle}><Grid size={18} /> Dashboard</NavLink>
                     <NavLink to="/citizens" style={navItemStyle}><Users size={18} /> Citizen Registry</NavLink>
+
+                    <NavLink to="/consent-requests" style={navItemStyle}>
+                        <FileCheck size={18} /> Consent Requests
+                        {pendingCount > 0 && (
+                            <span style={{ marginLeft: 'auto', background: theme.warning,
+                                color: '#000', fontSize: 10, fontWeight: 700,
+                                borderRadius: 10, padding: '2px 7px', lineHeight: 1 }}>
+                                {pendingCount}
+                            </span>
+                        )}
+                    </NavLink>
 
                     <div style={{ fontSize: 11, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '24px 0 12px', paddingLeft: 12 }}>Blockchain</div>
                     <NavLink to="/audit" style={navItemStyle}><Shield size={18} /> Transaction Audit</NavLink>

@@ -59,7 +59,7 @@ router.post('/enroll', authenticateToken, async (req, res) => {
         try {
             const bioRes = await axios.post(
                 `${BIOMETRIC_SERVICE}/api/face/verify`,
-                { image: faceImage, citizenId, stored_hash: citizen.biometricHash },
+                { image: faceImage, citizenId, storedHash: citizen.biometricHash },
                 { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
             );
             if (!bioRes.data?.verified && !bioRes.data?.match) {

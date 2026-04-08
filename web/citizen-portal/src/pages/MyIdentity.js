@@ -13,7 +13,12 @@ export default function MyIdentity() {
         try {
             const res = await API.get('/api/citizen/profile');
             setProfile(res.data);
-        } catch { } finally { setLoading(false); }
+        } catch (err) {
+            if (err.response?.status === 404) {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
+        } finally { setLoading(false); }
     };
 
     if (loading) return (

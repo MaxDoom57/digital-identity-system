@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sql = require('mssql');
 const { v4: uuidv4 } = require('uuid');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const dbConfig = {
     server: process.env.MSSQL_HOST || 'localhost',
@@ -95,6 +96,20 @@ router.post('/org/change-password', async (req, res) => {
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
         res.json({ success: true, token: newToken });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get current org info from token (for portal display)
+router.get('/org/me', authenticateToken, requireRole('organization'), async (req, res) => {
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input('orgId', sql.NVarChar, req.user.id)
+            .query('SELECT orgId, orgName FROM OrganizationUser WHERE orgId = @orgId');
+        if (result.recordset.length === 0) return res.status(404).json({ error: 'Not found' });
+        res.json({ orgId: result.recordset[0].orgId, orgName: result.recordset[0].orgName });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

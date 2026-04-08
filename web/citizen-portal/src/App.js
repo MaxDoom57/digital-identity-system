@@ -7,6 +7,7 @@ import MyIdentity from './pages/MyIdentity';
 import ConsentManager from './pages/ConsentManager';
 import OfflineToken from './pages/OfflineToken';
 import AccessHistory from './pages/AccessHistory';
+import Settings from './pages/Settings';
 import Layout from './components/Layout';
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
           <Route path="consent" element={<ConsentManager />} />
           <Route path="offline-token" element={<OfflineToken />} />
           <Route path="history" element={<AccessHistory />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

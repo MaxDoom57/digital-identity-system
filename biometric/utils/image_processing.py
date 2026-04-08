@@ -5,13 +5,22 @@ import io
 import base64
 
 def decode_base64_image(b64_string: str) -> np.ndarray:
-    """Decode base64 image to OpenCV format"""
+    """Decode base64 image to OpenCV format. Returns None on failure."""
+    if not b64_string:
+        return None
     if ',' in b64_string:
         b64_string = b64_string.split(',')[1]
-    img_bytes = base64.b64decode(b64_string)
+    if not b64_string:
+        return None
+    try:
+        img_bytes = base64.b64decode(b64_string)
+    except Exception:
+        return None
+    if len(img_bytes) < 100:          # too small to be a real image
+        return None
     img_array = np.frombuffer(img_bytes, dtype=np.uint8)
     img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-    return img
+    return img                        # may still be None if format is unrecognised
 
 def encode_image_base64(img: np.ndarray) -> str:
     """Encode OpenCV image to base64"""
